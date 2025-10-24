@@ -49,7 +49,7 @@ private static boolean allEnemiesDefeated() {
             map[rows - 1][i] = '#';
         }
         Random rand = new Random();
-        for (int i = 0; i < level; i++) {
+        for (int i = 0; i < level*2; i++) {
             int randRow = rand.nextInt(rows - 2) + 1;
             int randCol = rand.nextInt(cols - 2) + 1;
             map[randRow][randCol] = 'E';
@@ -112,76 +112,6 @@ private static boolean allEnemiesDefeated() {
             if (left && c > 1) c--;
             if (right && c < map[0].length - 2) c++;
 
-            if (map[r][c] == 'E') {
-                // Remove enemy immediately so you don't trigger multiple times
-                map[r][c] = ' ';
-
-                // Create a NON-MODAL dialog
-                final JDialog dialog = new JDialog((Frame) null, "Enemy Encounter!", false);
-                dialog.setSize(400, 200);
-                dialog.setLocationRelativeTo(null);
-                dialog.setLayout(new GridBagLayout());
-
-                GridBagConstraints gbc = new GridBagConstraints();
-                gbc.insets = new Insets(5, 5, 5, 5);
-                gbc.fill = GridBagConstraints.HORIZONTAL;
-                gbc.gridx = 0;
-                gbc.gridy = 0;
-
-                // First label
-                gbc.gridwidth = 2;
-                JLabel label1 = new JLabel("Type this exactly to defeat the enemy!", SwingConstants.CENTER);
-                dialog.add(label1, gbc);
-
-                // Second label
-                gbc.gridy++;
-                gbc.gridwidth = 1;
-                String message = getRandomPhrase();
-                JLabel label2 = new JLabel("Text:" + message);
-                dialog.add(label2, gbc);
-
-                // Text box
-                gbc.gridx = 1;
-                JTextField textField = new JTextField(15);
-                dialog.add(textField, gbc);
-
-                // Store user input in an AtomicReference so it can be updated inside listeners
-                AtomicReference<String> userInput = new AtomicReference<>("");
-
-                // Done button
-                gbc.gridy++;
-                gbc.gridx = 0;
-                gbc.gridwidth = 2;
-                JButton doneButton = new JButton("Done");
-                doneButton.addActionListener(ev -> {
-                    userInput.set(textField.getText());
-                    System.out.println("User typed: " + userInput.get());
-                    dialog.dispose();
-
-                    // Example: you can now handle the input, e.g.
-                    if (userInput.get().equalsIgnoreCase(message)) {
-                        System.out.println("Enemy defeated!");
-                    } else {
-                        System.out.println("You failed to defeat the enemy.");
-                        JOptionPane.showMessageDialog(dialog, "You were defeated! You got to level:" + level, "Defeated!", JOptionPane.ERROR_MESSAGE);
-                        map = generateMap(map.length, map[0].length, 2);
-                        resetGrid();
-                        level = 1;
-                    }
-                });
-                dialog.add(doneButton, gbc);
-
-                dialog.setVisible(true);
-
-                // Timer to auto-close after 10 seconds
-                new javax.swing.Timer(10000, ev -> {
-                    userInput.set(textField.getText());
-                    System.out.println("Dialog closed automatically. User typed: " + userInput.get());
-                    dialog.dispose();
-                }).start();
-            }
-            
-
 
             playerPosition[0] = r;
             playerPosition[1] = c;
@@ -231,47 +161,150 @@ private static void resetGrid() {
 
 
     private static void setupKeyBindings(JPanel panel) {
-        InputMap im = panel.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
-        ActionMap am = panel.getActionMap();
+    InputMap im = panel.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW);
+    ActionMap am = panel.getActionMap();
 
-        // Up
-        im.put(KeyStroke.getKeyStroke("W"), "upPressed");
-        im.put(KeyStroke.getKeyStroke("released W"), "upReleased");
-        am.put("upPressed", new AbstractAction() {
-            public void actionPerformed(ActionEvent e) { up = true; }
-        });
-        am.put("upReleased", new AbstractAction() {
-            public void actionPerformed(ActionEvent e) { up = false; }
-        });
+    // Up
+    im.put(KeyStroke.getKeyStroke("W"), "moveUp");
+    am.put("moveUp", new AbstractAction() {
+        public void actionPerformed(ActionEvent e) {
+            movePlayer(-1, 0); // move up by one
+        }
+    });
 
-        // Down
-        im.put(KeyStroke.getKeyStroke("S"), "downPressed");
-        im.put(KeyStroke.getKeyStroke("released S"), "downReleased");
-        am.put("downPressed", new AbstractAction() {
-            public void actionPerformed(ActionEvent e) { down = true; }
-        });
-        am.put("downReleased", new AbstractAction() {
-            public void actionPerformed(ActionEvent e) { down = false; }
-        });
+    // Down
+    im.put(KeyStroke.getKeyStroke("S"), "moveDown");
+    am.put("moveDown", new AbstractAction() {
+        public void actionPerformed(ActionEvent e) {
+            movePlayer(1, 0); // move down by one
+        }
+    });
 
-        // Left
-        im.put(KeyStroke.getKeyStroke("A"), "leftPressed");
-        im.put(KeyStroke.getKeyStroke("released A"), "leftReleased");
-        am.put("leftPressed", new AbstractAction() {
-            public void actionPerformed(ActionEvent e) { left = true; }
-        });
-        am.put("leftReleased", new AbstractAction() {
-            public void actionPerformed(ActionEvent e) { left = false; }
-        });
+    // Left
+    im.put(KeyStroke.getKeyStroke("A"), "moveLeft");
+    am.put("moveLeft", new AbstractAction() {
+        public void actionPerformed(ActionEvent e) {
+            movePlayer(0, -1); // move left by one
+        }
+    });
 
-        // Right
-        im.put(KeyStroke.getKeyStroke("D"), "rightPressed");
-        im.put(KeyStroke.getKeyStroke("released D"), "rightReleased");
-        am.put("rightPressed", new AbstractAction() {
-            public void actionPerformed(ActionEvent e) { right = true; }
-        });
-        am.put("rightReleased", new AbstractAction() {
-            public void actionPerformed(ActionEvent e) { right = false; }
-        });
+    // Right
+    im.put(KeyStroke.getKeyStroke("D"), "moveRight");
+    am.put("moveRight", new AbstractAction() {
+        public void actionPerformed(ActionEvent e) {
+            movePlayer(0, 1); // move right by one
+        }
+    });
+}
+
+private static void movePlayer(int dr, int dc) {
+    int r = playerPosition[0];
+    int c = playerPosition[1];
+
+    int newR = r + dr;
+    int newC = c + dc;
+
+    // Check bounds
+    if (newR < 0 || newR >= map.length || newC < 0 || newC >= map[0].length) return;
+
+    // Check wall
+    if (map[newR][newC] == '#') return;
+
+    // Check goal
+    if (map[newR][newC] == '^') {
+        if (allEnemiesDefeated()) {
+            level++;
+            map = generateMap(map.length + 2, map[0].length + 2, level);
+            resetGrid();
+            return;
+        } else {
+            JOptionPane.showMessageDialog(gridPanel, "Defeat all enemies first!", "Warning", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
     }
+
+    
+    if (map[newR][newC] == 'E') {
+        // Remove enemy immediately so you don't trigger multiple times
+        map[r][c] = ' ';
+
+        // Create a NON-MODAL dialog
+        final JDialog dialog = new JDialog((Frame) null, "Enemy Encounter!", false);
+        dialog.setSize(400, 200);
+        dialog.setLocationRelativeTo(null);
+        dialog.setLayout(new GridBagLayout());
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(5, 5, 5, 5);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+
+        // First label
+        gbc.gridwidth = 2;
+        JLabel label1 = new JLabel("Type this exactly to defeat the enemy!", SwingConstants.CENTER);
+        dialog.add(label1, gbc);
+
+        // Second label
+        gbc.gridy++;
+        gbc.gridwidth = 1;
+        String message = getRandomPhrase();
+        JLabel label2 = new JLabel("Text:" + message);
+        dialog.add(label2, gbc);
+
+        // Text box
+        gbc.gridx = 1;
+        JTextField textField = new JTextField(15);
+        dialog.add(textField, gbc);
+
+        // Store user input in an AtomicReference so it can be updated inside listeners
+        AtomicReference<String> userInput = new AtomicReference<>("");
+
+        // Done button
+        gbc.gridy++;
+        gbc.gridx = 0;
+        gbc.gridwidth = 2;
+        JButton doneButton = new JButton("Done");
+        doneButton.addActionListener(ev -> {
+            userInput.set(textField.getText());
+            System.out.println("User typed: " + userInput.get());
+            dialog.dispose();
+
+            // Example: you can now handle the input, e.g.
+            if (userInput.get().equalsIgnoreCase(message)) {
+                System.out.println("Enemy defeated!");
+            } else {
+                System.out.println("You failed to defeat the enemy.");
+                JOptionPane.showMessageDialog(dialog, "You were defeated! You got to level:" + level, "Defeated!", JOptionPane.ERROR_MESSAGE);
+                map = generateMap(map.length, map[0].length, 2);
+                resetGrid();
+                level = 1;
+            }
+        });
+        dialog.add(doneButton, gbc);
+
+        dialog.setVisible(true);
+
+        // Timer to auto-close after 10 seconds
+        new javax.swing.Timer(10000, ev -> {
+            userInput.set(textField.getText());
+            System.out.println("Dialog closed automatically. User typed: " + userInput.get());
+            dialog.dispose();
+        }).start();
+    }
+            
+    // Move player
+    map[r][c] = ' ';
+    playerPosition[0] = newR;
+    playerPosition[1] = newC;
+    map[newR][newC] = 'P';
+
+    // Refresh UI
+    for (int i = 0; i < map.length; i++) {
+        for (int j = 0; j < map[i].length; j++) {
+            cells[i][j].setText(String.valueOf(map[i][j]));
+        }
+    }
+}
+
 }

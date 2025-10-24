@@ -22,9 +22,14 @@ selection of words
 which when put
 together create
  a concept.
-There are eight types of phrases.
-These include noun phrases,
-verb phrases, gerund phrases,
-infinitive phrases, appositive phrases,
-participial phrases, prepositional phrases,
+There are eight
+types of phrases.
+These include
+noun phrases,
+verb phrases,
+gerund phrases,
+infinitive phrases,
+appositive phrases,
+participial phrases,
+prepositional phrases,
 and absolute phrases.
