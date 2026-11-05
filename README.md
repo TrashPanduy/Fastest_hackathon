@@ -10,5 +10,5 @@ In order to defeat an enemy the player must type out a specific phrase before th
 
 ---
 
-SwingMapGrid.java - void main and game logic functions
+SwingMapGrid.java - void main and game logic functions.
 This was inspired by the game "A Dark Room" and the 2d exploration it has in the mid to late game. 
